@@ -1,0 +1,389 @@
+@media all {
+body {
+	font-family: "Noto Serif", serif;
+	font-size: 10.25pt;
+	padding: 0 0 0 0;
+	margin: 0 0 0 0;
+	color: #000;
+}
+.page {
+	counter-reset: section 0;
+}
+body p:nth-last-child(1) {
+	margin-bottom: 0;
+}
+.page a {
+	color: #004FA3;
+	text-decoration: none;
+}
+.page a:visited {
+	color: #662A91;
+}
+.page a:hover {
+	border-bottom: 1px solid #004FA3;
+}
+.page a:active {
+	color: #F7941D;
+}
+.plaintext {
+	font-family: "Consolas", monospace;
+	font-size: 10.75pt;
+	white-space: pre-wrap;
+	line-height: 1.5;
+}
+pre {
+	font-family: "Consolas", monospace;
+	font-size: 10.75pt;
+	white-space: pre-wrap;
+	line-height: 150%;
+	margin-left: 0;
+	margin-right: 0;
+	margin-top: 0;
+	margin-bottom: 3.6607pt;
+	padding: 0 0 0 0;
+}
+pre span.line::before {
+	content: counter(line, decimal-leading-zero);
+	font-size: 8.86875pt;
+	color: #A7A7A7;
+	text-indent: -0.545in;
+	display: inline-block;
+	width: 0;
+	text-align: center;
+}
+span.line {
+	counter-increment: line;
+}
+pre li {
+	margin: 0 0 0 0;
+	padding: 0 0 0 0;
+}
+.page p, ul, .page ol {
+	padding: 0 0 0 0;
+	margin-right: 0;
+	margin-top: 0;
+	line-height: 170%;
+}
+
+.page ul, .page ol {
+	margin-left: 0.125in;
+	margin-bottom: 0;
+	text-indent: 0.125in;
+}
+p {
+	margin-Left: 0;
+	margin-bottom: 0;
+}
+p + p, p + h1, p + h2, p + h3, p + h4, p + h5, p + h6, p + section, pre + h1, pre + h2, pre + h3, pre + h4, pre + h5, pre + h6, pre + section, ul + h1, ul + h2, ul + h3, ul + h4, ul + h5, ul + h6, ol + h1, ol + h2, ol + h3, ol + h4, ol + h5, ol + h6, ul + pre, ol + pre {
+	margin-top: 7.3214pt;
+}
+p + ul, p + ol, p + pre, ul + p, ol + p, pre + p {
+	margin-top: 3.6607pt;
+}
+table {
+	border-top: solid 2.25pt #004FA3;
+	border-bottom: solid 0.75pt #004FA3;
+	border-left: solid 0.75pt #004FA3;
+	border-right: solid 0.75pt #004FA3;
+	border-collapse: collapse;
+	border-spacing: 0px;
+	width: 7in;
+}
+caption {
+	caption-side: bottom;
+}
+tbody tr td.firstCol, tbody tr td.lastCol, tfoot {
+	text-weight: bold;
+}
+figure {
+	margin-left: 0;
+	margin-right: 0;
+	text-align: center;
+}
+figcaption::before {
+	content: "Figure " counter(fig) " ";
+}
+figcaption::before {
+	counter-increment: fig;
+}
+td, th {
+	padding-left: 4.5pt;
+	padding-right: 4.5pt;
+	padding-bottom: 0;
+}
+td {
+	line-height: 170%;
+	padding-top: 0;
+}
+tr:nth-of-type(even) {
+	background-color: #F2F6FA;
+}
+th {
+	color: #004FA3;
+	font-size: 10.738pt;
+	text-align: center;
+	vertical-align: middle;
+	padding-top: 0.5pt;
+}
+.title {
+	font-size: 36pt;
+	color: #6B9C30;
+}
+.subtitle {
+	font-size: 20pt;
+}
+.title, .subtitle, th, h1, h2, h3, h4, h5, h6 {
+	font-family: "Angelo", "Museo Sans 300", "Museo Sans", "Myriad Pro", "Myriad", sans-serif;
+	font-weight: 300;
+	margin: 0 0 0 0;
+}
+h1 {
+	font-size: 25.647pt;
+	color: #F7941D;
+}
+h2, .block {
+	counter-reset: line;
+}
+section h1 {
+	counter-increment: section;
+	counter-reset: fig;
+}
+section h1::before, .subtitle {
+	color: #A7A7A7;
+}
+section h1::before {
+    content: counter(section) ".";
+}
+h2, h3, h4, h5, h6, caption, figcaption {
+	color: #004FA3;
+}
+h2::after {
+	background-image: linear-gradient(to right, rgba(0,79,163,1) 0%, rgba(0,79,163,1) 93%, rgba(0,79,163,0) 100%);
+	padding-bottom: 0.75pt;
+	margin-bottom: 0.125in;
+	display: block;
+	content: "";
+}
+h2 {
+	font-size: 16.595pt;
+}
+h3 {
+	font-size: 10.738pt;
+	letter-spacing: 0.125pt;
+}
+h4, caption, figcaption {
+	font-size: 8.2976pt;
+	text-transform: uppercase;
+	letter-spacing: 0.25pt;
+}
+.keyword {
+	color: #003B81;
+	font-weight: 700;
+}
+}
+ @media print {
+div.top {
+	display: none;
+}
+p {
+    orphans: 3;
+	widows: 2;
+}
+table {
+	border-bottom: solid 0.25pt #004FA3;
+	border-left: solid 0.25pt #004FA3;
+	border-right: solid 0.25pt #004FA3;
+}
+section {
+	page-break-after: always;
+}
+h1, h2, h3, h4, h5, h6 {
+	page-break-after: avoid;
+	page-break-inside: avoid;
+}
+section h1::before {
+	content: counter(section) ". ";
+}
+h2::after, .border {
+	padding-bottom: 0.25pt;
+}
+}
+ @media screen and (min-resolution: 128dpi) {
+.subtitle::after {
+	padding-bottom: 0.5pt;
+}
+h2::after, .border {
+	padding-bottom: 0.5pt;
+}
+table {
+	border-bottom: solid 0.5pt #004FA3;
+	border-left: solid 0.5pt #004FA3;
+	border-right: solid 0.5pt #004FA3;
+}
+}
+ @media screen {
+body {
+	background: #EFEFEF;
+}
+.page:nth-child(2) {
+	margin-top: 22.5pt;
+}
+.page {
+	padding: 0 0 0 0;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 2.25pt;
+	margin-bottom: 2.25pt;
+	width: 8.5in;		   /* Tip: Lucent can accomodate different paper sizes, and even two full-size documents side by side on screen, such as a revision next to the original; just set this value to the toal width you want (i.e. 17in for two 8.5x11 documents shown side by side) and use one div.main/div.plaintext for each document in your HTML.*/
+	box-shadow: 0pt 0pt 1.5pt 0pt RGBA(0,0,0,0.27);
+	background-color: #FFF;
+	box-sizing: content-box;
+}
+.plaintext, .main {
+	padding: 0.75in 0.75in 0.75in 0.75in;
+	width: 8.5in;
+	box-sizing: border-box;
+	display: inline-block;
+	vertical-align: top;
+}
+.subtitle::after {
+	background-image: linear-gradient(to right, rgba(186,186,186,1) 0%, rgba(186,186,186,1) 93%, rgba(186,186,186,0) 100%);
+	padding-bottom: 0.75pt;
+	margin-bottom: 0.125in;
+	display: block;
+	content: "";
+}
+section:nth-child(1) {
+	margin-top: 0;
+	padding-top: 0;
+}
+section {
+	margin-top: 0.27in;
+	padding-top: 0.23in;
+}
+section h1::before {
+	text-indent: -0.65394in;
+	display: inline-block;
+	width: 0;
+	text-align: center;
+}
+nav {
+	font-family: "Angelo", "Museo Sans 300", "Museo Sans", sans-serif;
+	font-weight: 300;
+	font-size: 10.738pt;
+	letter-spacing: 0.25pt;
+	background: linear-gradient(to top, #DFDFDF 0%, #E4E4E4 25%, #EAEAEA 75%, #F2F2F2 100%);
+	box-shadow: 0pt 0pt 1.5pt 0pt rgba(0, 0, 0, 0.27);
+	padding: 0;
+	margin: 0;
+	counter-reset: navSection 0;
+}
+div.top {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+}
+div.fixed {
+	position: fixed;
+	top: -0.15in;
+}
+div.hidden {
+	visibility: hidden;
+	position: absolute;
+}
+nav ol {
+	list-style: none;
+	text-align: center;
+	padding: 0;
+}
+nav ol li {
+	display: inline;
+	white-space: nowrap;
+}
+nav ol li a, nav ol li span {
+	border-right: solid 0.75pt #DFDFDF;
+	border-left: solid 0.75pt #F2F2F2;
+	background: none;
+	position: relative;
+	padding-top: 3pt;
+	padding-left: 4.5pt;
+	padding-right: 4.5pt;
+	text-align: center;
+	color: rgba(0, 0, 0, 0.6875);
+	text-decoration: none;
+	display: inline-block;
+	min-width: 19.5pt;
+	height: 16pt;
+	vertical-align: middle;
+	counter-increment: navSection;
+}
+nav ol li a::before, nav ol li span::before {
+	content: counter(navSection) ": ";
+}
+nav ol li a:hover, nav ol li a:active, nav ol li span, nav ol li a.selected, nav ol li span.selected {
+	color: #000;
+}
+/*nav ol li a.red:hover, nav ol li a.red:active, div.red, p.red, table.red, col.red, colgroup.red, th.red, td.red, nav ol li span.red {
+	background-color: #BF1800;
+}
+nav ol li a.orange:hover, nav ol li a.orange:active, div.orange, p.orange, table.orange, col.orange, colgroup.orange, th.orange, td.orange, nav ol li span.orange {
+	background-color: #CF5810;
+}
+nav ol li a.yellow:hover, nav ol li a.yellow:active, div.yellow, p.yellow, table.yellow, col.yellow, colgroup.yellow, th.yellow, td.yellow, nav ol li span.yellow {
+	background-color: #DF9820;
+}
+nav ol li a.mustard:hover, nav ol li a.mustard:active, div.mustard, p.mustard, table.mustard, col.mustard, colgroup.mustard, th.mustard, td.mustard, nav ol li span.mustard {
+	background-color: #9F8C10;
+}
+nav ol li a.green:hover, nav ol li a.green:active, div.green, p.green, table.green, col.green, colgroup.green, th.green, td.green, nav ol li span.green {
+	background-color: #608000;
+}
+nav ol li a.tealgray:hover, nav ol li a.tealgray:active, div.tealgray, p.tealgray, table.tealgray, col.tealgray, colgroup.tealgray, th.tealgray, td.tealgray, nav ol li span.tealgray {
+	background-color: #306460;
+}
+nav ol li a.blue:hover, nav ol li a.blue:active, div.blue, p.blue, table.blue, col.blue, colgroup.blue, th.blue, td.blue, nav ol li span.blue {
+	background-color: #0048BF;
+}
+nav ol li a.purple:hover, nav ol li a.purple:active, div.purple, p.purple, table.purple, col.purple, colgroup.purple, th.purple, td.purple, nav ol li span.purple {
+	background-color: #582497;
+}
+nav ol li a.burgandy:hover, nav ol li a.burgandy:active, div.burgandy, p.burgandy, col.burgandy, colgroup.burgandy, table.burgandy, th.burgandy, td.burgandy nav ol li span.burgandy {
+	background-color: #AF006E;
+}
+nav ol li a.rose:hover, nav ol li a.rose:active, div.rose, p.rose, table.rose, col.rose, colgroup.rose, th.rose, td.rose, nav ol li span.rose {
+	background-color: #B70C37;
+}
+nav ol li a.gray:hover, nav ol li a.gray:active, div.gray, p.gray, table.gray, col.gray, colgroup.gray, th.gray, td.gra, nav ol li span.gray {
+	background-color: #505050;
+}
+.redText {
+	color: #BF1800;
+}
+.orangeText {
+	color: #CF5810;
+}
+.yellowText {
+	color: #DF9820;
+}
+.mustardText {
+	color: #9F8C10;
+}
+.greenText {
+	color: #608000;
+}
+.tealgrayText {
+	color: #306460;
+}
+.blueText {
+    color: #0048BF;
+}
+.purpleText {
+	color: #582497;
+}
+.burgandyText {
+	color: #AF006E;
+}
+.grayText {
+	color: #4F4F4F;
+}*/
+}

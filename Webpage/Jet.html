@@ -1,0 +1,82 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Jet Programming Language</title>
+<link href="Lucent.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<div class="top fixed">
+  <nav>
+    <ol>
+      <li><a href="#1">Introduction</a></li><li><a href="#2">Variables, Literals, & Expressions</a></li><li><a href="#3">Functions & Types</a></li>
+    </ol>
+  </nav>
+</div>
+<article class="page">
+<div class="main">
+<section>
+<div class="title">Jet</div>
+<div class="subtitle">Programming Language<br>by Chad Lechner</div>
+</section>
+<section id="1">
+<h1>Introduction</h1>
+<p>Jet is a modern, high-level, object-based (actually datatype-oriented, as I like to think of it) programming language I designed.  I named it Jet because &#8216;PIE&#8217; was already taken.</p>
+<h2>Why Would You Use Jet?</h2>
+<h3>Fresh and Modern</h3>
+<p>Jet takes the well-established concepts of object-based, statically-typed, and imperative programming, incorporates many new concepts and features (mostly derived from functional programming), adds automatic garbage collection and actor-like concurrency, and fuses everything together with a lightweight syntax and highly-expressive type system.</p>
+<h3>High-Performance</h3>
+<p>Jet is statically-typed, performs thorough static analysis, and is compiled to native code, for maximum performance.  The type-system is also very strong and precise, reducing costly runtime checks and type casting.  Dependent-typing reduces runtime array bounds checks, the absence of inheritance allows static linking on concrete types, and parameterized types reduce runtime type casts. The differentiation between referencable and non-referencable types permits better static analysis and optimization.</p>
+<h3>Concurrency-Ready</h3>
+<p>Jet has actor-style concurrency built-in, so your programs can take advantage of multi-core processors and distributed systems, and easily swap between the two architectures.</p>
+<h3>Safe</h3>
+<p>Jet is very safe with a strong, static&#8212;and comprehensive&#8212;type system.  All types are non-nullable unless specified otherwise, even references.  All types are value-based unless specified otherwise.  And all types have no inheritance hierarchy.</p>
+<p>Jet also incorporates dependent typing and measure typing.  Dependent typing extends type checking and annotations to sets of values, such as integers greater than or equal to zero, or lists of a certain size.  Combined with runtime checks in inconclusive cases, this prevents buffer overflows and out-of-range errors.  Measurement typing provides a system of type-verification and unit conversions over units of measure. This further verifies the correctness of your programs and also performs unit conversions automatically.</p>
+<h3>High-Level</h3>
+<p>Jet's type system is truly high-level; all types can be instantiated as value-based or reference-based, non-nullable or nullable, mutable or immutable.  Jet also performs automatic memory management, determining stack, heap, and register allocations automatically, and collecting garbage on its own.</p>
+</section>
+<section id="2">
+<h1>Variables, Literals, and Expressions</h1>
+<h2>Variables</h2>
+<h3>Declarations</h3>
+<p>To create a variable you write a variable declaration.  Variable declarations include the variable name, datatype, and optionally, an initial value.</p>
+<pre><span class="line"><em>name</em> = <em>type</em><br /></span><span class="line">i = Int<br /></span><span class="line"><br /></span><span class="line"><em>name</em> = <em>type</em>: <em>value</em><br /></span><span class="line">i = Int: 0</span></pre>
+<p>If you are initializing a variable with a starting value, Jet can infer the datatype for you.</p>
+<pre><span class="line"><em>name</em>: <em>value</em><br /></span><span class="line">i: 0</span></pre>
+<p>Thus, these next two declarations/initializations are equivalent.</p>
+<pre><span class="line">timestamp = DateTime: New(y = 2015, m = 1, d = 1)<br /></span><span class="line">timestamp: DateTime.New(y = 2015, m = 1, d = 1)</span></pre>
+<h3>Naming Rules</h3>
+<p>Variable names begin with a lowercase letter and may be followed by uppercase letters, lowercase letters, numbers, or a combination.  The following are all valid variable names.</p>
+<pre><span class="line">v  var  vAr  vaR  vAR  var301  v4r  v1A2R3  sUp3rCaLiFr4gI1IsTiC3XpIaLiDoCi0uS</span></pre>
+<p>However, names are are not distinguished by case.  This means that variable names that use the same pattern of letters and numbers, but written in a different case (such as in uppercase instead of lowercase), refer to the same variable.  Thus, the following variable names are considered equivalent and &#8220;identical&#8221; in Jet.</p>
+<pre><span class="line">varname  varName  varNAME  vArNaMe  vARNAME</span></pre>
+<p>Names can also be hyphenated.  Each section of a hyphenated name follows the same rules as regular names.</p><pre><span class="line">smith  jane  smith-jane  x-i  x-j  sUp3r-c41I-fRaGiL-iStIc-eXpI-aLi-d0cIoUs</span></pre>
+<p>Variable names can additionally have an <code>@</code> prepended to them.  This sigil is required if a variable shares the same name as another (non-variable) item.  Simply adding this extra character does not change the actual variable name.  Again, this is useful when the name you prefer is already in use for a related item in the program, such as a function or datatype.
+<p>You can also enclose a name in single quotes.  This allows you to use names that are valid in another language that you're interfacing with, but invalid in Jet.</p>
+<h3>Assignment</h3>
+<p>To assign a value to a variable, type the variable, a left arrow (angle bracket and hyphen), and the value.</p>
+<pre><span class="line">int <strong>&lt;-</strong> 0</span></pre>
+<h2>Literals</h2>
+<h3>Integers</h3>
+<p>Standard integers consist of a series of the digits 0 through 9.</p>
+<pre><span class="line">0  5  795314  79645864231</span></pre>
+<p>Integers can also be written in hexadecimal form, by prepending <code>0x</code> (digit zero and letter x) and using the letters A through F as the additional six hexadecimal digits.  The initial letter X must be lowercase, but the digits A through F may be uppercase, lowercase, or mixed-case, though lowercase is the preferred style.</p>
+<pre><span class="line">0x0  0x12345  0x1ab7c3  0xFFFFFF  0xffffff  0xa4A9c  0x2A7  0xaABbCcdDeEFf</span></pre>
+<h3>Floating-Point Numbers</h3>
+<p>Standard floating-point numbers are written as either an integer, followed by a decimal point, and optionally another series of digits 0 through 9; or a leading decimal point followed by a series of digits 0 through 9.</p>
+<pre><span class="line">0.0  0.  .0  0.5  .5  2.50  100000.  1.  1.0  1.00  1.00000000  123456789123456789.</span></pre>
+<p>Floating-point numbers can also be written in scientific notation, by appending a letter 'e' (capital or lowercase), and then a standard integer (optionally with a minus or plus sign).</p>
+<h3>Currencies</h3>
+<p>Prepending a dollar sign to a standard integer or floating-point literal denotes a currency literal.  Currency is a seperate datatype from the other numeric types, used primarily to represent monetary amounts.  Unique to currency literals is the ability to use commas or spaces as digit separators.  You can insert these separators nearly anywhere inside a literal, in practically any pattern, even with double spaces; however:</p>
+<ul>
+<li>You must exclusively use one kind or the other (just commas <em>or</em> just spaces)</li>
+<li>Each occurrence must be preceded and followed by at least one digit.</li>
+</ul>
+<h3>Character Sequences</h3>
+<p>Strings, also known in Jet as character sequences, consist of double quotes, optionally with a piece of text inside, like this:</p>
+<pre><span class="line">""  "Hello, World!"  "asfjklaflasf"  "314159267"  "True"  "$@#!"  ".50"</span></pre>
+<p>In a standard character sequence, the string of characters inside quotes is first processed using the following rules.  A pair of double quotes is treated as just one double quote mark.  For instance, the syntax <code>""""</code> (four quotes) specifies the string <code>"</code>, <code>""""""</code> (six quotes) specifies the string <code>""</code>, and so on.  The <code>`</code> (backtick) symbol is an escape character.  When followed by <code>n</code> a new line is inserted, <code>t</code> a horizontal tab is inserted. Typing a backtick, letter <code>U</code> (uppercase or lowercase), a <code>+</code> sign, and four hexadecimal digits produces the unicode character at that codepoint.  Typing a backtick followed by an expression inside of parentheses evaluates the expression then inserts the result into the string.</p>
+</section></div></article>
+</body>
+</html>

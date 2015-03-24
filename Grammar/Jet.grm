@@ -1,0 +1,567 @@
+! Written using (and testable with) GOLD Parser Builder (www.goldparser.org)
+
+"Name"           = 'Jet' ! Formerly known as PIE
+"Author"         = 'Chad Lechner'
+"Version"        = '1.0 (WIP)' ! Formerly PIE 1.0 Draft (Generation 3)
+"About"          = 'Jet is a general-purpose, high-level, native language for people off-put by let bindings, inheritance hierarchies, and semicolons.  As in airline travel, Jet provides safety and security through comprehensive pre-flight testing and security screening, high-speed travel as the crow flies, first-class conveniences, and very high crash resistance.  It takes inspiration from C#, Common Lisp, D, E, F#, Haskell, Python, Scala, and Xanadu.'
+
+"Case Sensitive" = 'True'
+"Start Symbol"   = <Start>
+
+! ========================================
+! Character Set Definitions
+! ----------------------------------------
+
+{WS}           = {Whitespace} - {CR} - {LF}                                      ! Defined as all whitespace characters except carriage return and line feed, which denote new lines
+{String Char}  = {Printable} + {Printable Extended} + {HT} + {CR} + {LF} - ["]
+{Name Char}    = {Printable} + {Printable Extended} - {HT} - {CR} - {LF} - ['']
+{Uppercase}    = [ABCDEFGHIJKLMNOPQRSTUVWXYZ]
+{Lowercase}    = [abcdefghijklmnopqrstuvwxyz]
+{Hex Char}     = {Number} + [ABCDEFabcdef]
+
+! ========================================
+! "Noise" and Newline Terminals
+! ----------------------------------------
+
+Whitespace = {WS}+ !| '...' {WS}* ({CR}{LF} | {CR} | {LF} | {LS}) {WS}* ! Whitespace characters ({WS}) or a line continuation ('...')
+
+NewLine    = {CR}{LF} | {CR} | {LF} | {LS}                             ! Carriage return, line feed, or both, or Unicode line separator
+
+Comment Line  = '`'
+!Comment Start = '(`'
+!Comment End   = '`)'
+
+! ========================================
+! Keyword Terminals
+! ----------------------------------------
+
+AssignmentOperator    = '<-' | '++' | '--' | '**' | '//' | '^^^^' ('n' | 's' | 't' | '_' | '.')? ! Plain assignment, or with addition, subtraction, multiplication, division, or concatenation, respectively
+!BaseTypeKeyword       = 'bool' | 'byte' | 'char' | 'count' |'decimal' | 'float' | 'int' ! Built-in primitive types; 'future' is like 'Task' in C#; 'count' is a counting number or zero; 'state' represents side effects; there is no 'string' (for compatibility with units of measure), use 'seq(char)'
+ConcatenationOperator = '^^' | '^^' ('n' | 's' | 't' | '_' | '.') ! Concatenate without a joiner, or with a newline, space, tab, underscore, or dot (full stop) in between, respectively
+!EventTime             = 'exec' | 'statement'
+FuncKeyword           = 'cons' | 'func'
+!GenericTypeKeyword    = 'matrix' | 'range' | 'service'            ! Built-in generic/parameterized types; 'chain' is a linked list; 'optional' defines a nullable type; 'async' is an ansynchronously-accessible object; 'service' is an actor-model actor
+!IdentifierKeyword     = 'args' | 'result' | 'self' | '@self'
+InequalityOperator    = '~=' | '<' | '>' | '<=' | '>='
+MultiplyOperator      = '*' | '/'
+!MacroKeyword          = 'before' | 'inline' | 'after'             ! Inserted before the statement, substituted inline, and inserted after the statement, respectively
+
+! ========================================
+! Identifier Terminals
+! ----------------------------------------
+
+!PublicIdentifier  = {Uppercase} {AlphaNumeric}* ('-' {Uppercase} {AlphaNumeric}*)*               ! Name for public scope items
+!PrivateIdentifier = {Lowercase} {AlphaNumeric}* ('-' {Lowercase} {AlphaNumeric}*)*               ! Name for private/local scoped items
+Identifier        = {Letter} {AlphaNumeric}* ('-' {Letter} {AlphaNumeric}*)* | '' {Name Char}+ ''
+
+! ========================================
+! Literal Value Terminals
+! ----------------------------------------
+                         
+StringLiteral        = '!'? '"' ({String Char} | '""' )* '"'
+FloatingPointLiteral = {Number}+ '.' | {Number}+ '.' {Number}+ | '$' ({Number} ((({Number} | ',')+ | ({Number} | ' ')+) {Number})? '.'? | '.' ((({Number} | ',')+ | ({Number} | ' ')+) {Number})? | {Number} ((({Number} | ',')+ | ({Number} | ' ')+) {Number})? '.' {Number} ((({Number} | ',')+ | ({Number} | ' ')+) {Number})?)
+ScientificLiteral    = ({Number}+ '.' | '.' {Number}+ | {Number}+ '.' {Number}+) ('e'| 'E') ('-' | '+')? {Number}+                                                                                                                                                                                                                 ! Floating-point number in scientific notation
+IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
+BooleanLiteral       = 'true' | 'false'
+
+! ========================================
+! Start Rule
+! ----------------------------------------
+
+<Start> ::= <nls Opt> <Program>
+
+! ========================================
+! Program Rules
+! ----------------------------------------
+
+<Program>          ::= <Implys> <Namespace Blocks>
+                    |  <Implys> <Statements> <ss Opt>
+                    |  <Namespace Blocks>
+                    |  <Statements> <ss Opt>
+
+<Implys>           ::= <Implys> <Imply>
+                    |  <Imply>
+
+<Imply>            ::= 'imply' <Namespaces> <ss> ! Tells the compiler to look for partially qualified (full namespace not specified) names in the listed namespaces; think of 'using' in C#
+
+<Namespace Blocks> ::= <Namespace Blocks> <Namespace Block>
+                    |  <Namespace Block>
+                    
+<Namespace Block>  ::= <Set Namespace> <Statements> <ss Opt>
+
+<Set Namespace>    ::= 'in' <Full Name> <ss> ! Sets the current namespace; think of 'namespace' or 'package' in Python/Java/C#
+              
+<Namespaces>       ::= <Namespaces> ',' <nls Opt> <Full Name>
+                    |  <Full Name>
+              
+!<Namespace>        ::= <Full Name>
+!                    !|  <Full Name> '.' '*'                     ! Used to specify all child items of a namespace
+!                    !|  <Full Name> 'as' Identifier
+!                    !|  <Full Name> '.' '*' 'as' Identifier '.' '*'
+                 
+! ========================================
+! Line Rules
+! ----------------------------------------
+
+<nls>     ::= <nls> NewLine
+           |  NewLine
+
+<nls Opt> ::= <nls> ! Allow line breaks
+           |  ! Nothing
+              
+! ========================================
+! Block Rules: Generic Blocks
+! ----------------------------------------
+
+<Full Block Opt>      ::= <ss> <Statements> <ss> 'end'
+                       |  <ss> 'end'
+
+<Block Opt>           ::= <Internal Block Opt> 'end'
+                   
+<Internal Block Opt>  ::= <Internal Block>
+                       |  <ss>
+               
+<Internal Block>      ::= <ss> <Internal Statements> <ss>
+                   
+! ========================================
+! Block Rules: Control Flow
+! ----------------------------------------
+
+<If Block>     ::= 'if' <Expression> <Block Opt>
+                |  'if' <Expression> <Internal Block Opt> <Else Block>
+                |  'if' <Expression> ':' <Internal Statement>
+                
+<Else Block>   ::= 'else' <Block Opt>
+                |  'else' <If Block>
+                |  'else' <Expression> ':' <Internal Statement>
+
+<Case Selector> ::= <Case Blocks>
+                 |  <Case Blocks> 'else' <Internal Block Opt> ! With default case
+                 
+<Case Blocks>   ::= <Case Blocks> <Case Block>
+                 |  <Case Block>
+                 
+<Case Block>    ::= 'val' <Expressions> <Internal Block Opt>            ! Match a value
+                 |  'cond' <Or Condition> <Internal Block Opt>          ! Match a condition
+                 |  'ref' <Expressions> <Internal Block Opt>            ! Match a reference
+                 |  'type' <Full Type> <Internal Block Opt>             ! Match a datatype (for option types)
+                 |  'val' <Expressions> ':' <Internal Statement> <ss>
+                 |  'cond' <Or Condition> ':' <Internal Statement> <ss>
+                 |  'ref' <Expressions> ':' <Internal Statement> <ss>
+                 |  'type' <Full Type> ':' <Internal statement> <ss>
+                    
+<Or Condition>  ::= <Or Condition> 'or' <And Condition>
+                 |  <And Condition>
+                    
+<And Condition> ::= <And Condition> 'and' <Condition>
+                 |  <Condition>
+
+! ========================================
+! Statement Rules
+! ----------------------------------------
+
+! Statement Separator
+<ss>                  ::= <nls> ! New lines
+                       |  ';'
+                       
+<ss Opt>              ::= <ss>
+                       |  ! Nothing
+
+!<Annotation>          ::= '--' <Full Name>
+!                       |  '--' <Full Name> <Tuple>
+!                       |  '--' <Full Name> '=' <Expression>
+
+! More Info on Annotations:
+! Annotations provide additional information or instructions to the compiler, compile-time tools, or run-time system
+! For instance, annotations can encourage PIE to pack variables (such as 'bool's) together in memory without added padding (for better memory usage, but slower access); type '--pack:' on a line above the variable declaration
+! Add-ons, tools, and libraries can define their own annotations as well
+
+<Statements>           ::= <Statements> <ss> <Statement>
+                        |  <Statement>
+
+<Statement>            ::= <Internal Statement>
+                        |  'enum' Identifier ':' <Expression>                     ! Enumeration; a set of discreet, named values, such as months, or days of the week; e.g. enum Weekdays: {Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday}
+                        |  'extend' <Full Type> <Full Block Opt>                  ! Extension definition; extensions can: add new public members to a datatype, as in C#; overload a generic method (aka 'func set'); and override or augment existing members of a datatype
+                        |  'head' <Abstract Definition>                           ! Used to define members of an attribute (aka 'head type')
+                        !|  InsertKeyword <Namespaces> 'with' <Func Tuple Type> <Block Opt> ! AOP
+                        !|  InsertKeyword 'all' 'with' <Func Tuple Type> <Block Opt>        ! AOP
+                        |  'require' <Type Names>                                 ! Adds the requirements of another attribute(s), e.g. 'head type #IO; require #Reader, #Writer'; or requires a specific implementation of a function set, e.g. 'head type #Number; require Add(this, this)'
+                        |  'type' <Type Name> <Full Block Opt>                    ! Datatype (aka class) definition
+                        !|  'type' <Type Name> 'from' <Type Name> <Full Block Opt> ! Datatype based on the prototype of another datatype; newly-defined members always override existing members of the prototype, so conflicts never occur
+                        |  'type' <Type Name> ':' <Full Type>                     ! Datatype alias; useful for naming attribute combinations, option types, boxed types, and types with extensions applied
+
+<Internal Statements>  ::= <Internal Statements> <ss> <Internal statement>
+                        |  <Internal Statement>
+                        
+<Internal Statement>   ::= <Intratype Statement>
+                        |  '@' Identifier <Internal Statement> ! e.g. @error, @final, @replace
+!                        |  <Annotation>
+!                        |  <Annotation> ':' <nls Opt> <Statement> ! An annotation linked to a statemen
+
+<Anonymous Block>      ::= 'code' <Block Opt> ! A code block, useful for local code scoping, and writing inline imperative code
+                  
+<Intratype Statement>  ::= <Public Opt> FuncKeyword Identifier <Func Tuple Type> '=>' <Full Type> <Block Opt>               ! Function definition with return value
+                        |  <Public Opt> FuncKeyword Identifier <Func Tuple Type> <Block Opt>                                ! Function definition with no return value (aka procedure)
+                        |  <Public Opt> 'measure' <Measure Identifier>                                                      ! Base measurement (e.g. length, mass, time, data) and the datatype it is associated with
+                        |  <Public Opt> 'measure' <Measure Identifier> ':' <Expression>                                     ! Derived measurement (e.g. volume, force, pixel-area, voltage) defined as a combination of other measurements
+                        !|  <Public Opt> 'measure' <Measure Identifier> '=>' <Measure Identifier>                            ! Absolute measurement (e.g. _Location => _Length)
+                        |  <Public Opt> 'measure' <Measure Identifier> 'of' <Measure Identifier>                            ! Sub-measurement (e.g. _Width of _Length, _Height of _Length)
+                        |  <Public Opt> 'state' <Measure Identifier>                                                        ! Base or default state
+                        |  <Public Opt> 'state' <Measure Identifier> ':' 'apply' <Expression> 'reject' <Expressions>        ! State (e.g. negative, letter, uppercase); the 'apply' expression specifies how to reach the state (e.g. Char.ToUppercase()), and the reject expressions specify operations that invalidate the state
+                        |  <Public Opt> 'prop' Identifier '=' <Full Type> <ss> 'get' <Internal Block Opt> 'set' <Block Opt> ! Getter/setter property; propeties are needed to access variables publicly; only 1 'end' keyword is used (instead of the 3 closing braces in C#) for a simpler, lighter feel
+                        |  <Public Opt> 'prop' Identifier '=' <Full Type> <ss> 'get' <Block Opt>                            ! Getter (read-only) property
+                        |  <Public Opt> 'prop' Identifier '=' <Full Type> <ss> 'set' <Block Opt>                            ! Setter (write-only) property
+                        |  <Public Opt> FuncKeyword Identifier <Func Tuple Type> '=>' <Full Type> ':' <Expression>
+                        |  <Public Opt> FuncKeyword Identifier <Func Tuple Type> ':' <Expression>                           ! One-line function definition
+                        |  <Public Opt> 'prop' Identifier '=' <Full Type> ':' 'get' <Expression> 'set' <Identifier>         ! One-line getter/setter property
+                        |  <Public Opt> 'prop' Identifier '=' <Full Type> ':' 'get' <Expression>                            ! One-line getter (read-only) property
+                        |  <Public Opt> 'prop' Identifier '=' <Full Type> ':' 'set' <Identifier>                            ! One-line setter (write-only) property
+                        |  <Public Opt> 'prop' Identifier ':' 'get' <Expression> 'set' <Identifier>                         ! One-line getter/setter property; useful for exposing variables publicly, as in 'prop Name: get name set name'
+                        |  <Public Opt> 'prop' Identifier ':' 'get' <Expression>                                            ! One-line getter (read-only) property
+                        |  <Public Opt> 'prop' Identifier ':' 'set' <Identifier>                                            ! One-line setter (write-only) property
+                        |  'test' <Expression>                                                                              ! Tests a function call at compile-time, returning a level 2 error on false, and a level 4 warning if it cannot prove truth or falsity at compile-time; removed in favor of annotation syntax
+                        !|  <Public Opt> 'unit' <Measure Identifier> '=' <Measure Identifier>                                ! Unit of measure defined as the base unit of a measure
+                        |  <Public Opt> 'unit' <Measure Identifier> ':' <Concat Exps>                                       ! Unit of measure (defined as the base unit of a measure or a derived unit in terms of an existing unit(s))
+                        |  'shared' <Variable Declaration>                                                                  ! Variable shared among all instances of the datatype definition; i.e. 'static' in other languages
+                        |  <Variable Declaration>
+                        |  'build' 'shared' <Variable Declaration> <Block Opt>
+                        |  'build' <Variable Declaration> <Block Opt>                                                       ! Allows you to initialize a variable, then set properties on it without specifying the variable name all of the time
+                        |  <Identifiers> AssignmentOperator <Expression>                                                    ! Assignment
+                        |  <Identifier> <Tuple>                                                                             ! Necessary for impure, no-result function calls
+                        |  <If Block>                                                                                       ! Conditional ("if") block
+                        |  'match' <Expression> <ss> <Case Selector> 'end'                                                  ! Similar to a "switch" block
+                        |  <Anonymous Block>                                                                                ! Marks a local code block; useful for scoping local variables and the 'repeat' keyword
+                        |  'for' 'each' Identifier 'from' <Lambda Exp> <Block Opt>                                          ! Iteration block; iterates over a collection or #Iterable
+                        |  'for' 'each' Identifier 'from' <Lambda Exp> <Internal Block Opt> 'else' <Block Opt>              ! Iteration block; iterates over a collection or #Iterable, executing the 'else' block if the collection/#Iterable is empty
+                        |  'for' 'each' Identifier 'from' <Lambda Exp> ':' <Internal Statement>
+                        |  'when' <Expression> 'loop' <Block Opt>
+                        !|  'on' <Identifier> <Block Opt>                                                                    ! Essentially a local 'imply' statement; think of 'With ... EndWith' in Visual Basic; removed due to missing 
+                        !|  'require' <Or Exp>                                                                               ! Enforce dependent typing constraints on variables; Rrmoved in favor of annotation syntax
+                        |  'leave'
+                        |  'leave' <Identifier>                                                                             ! Leaves the function call, as in a semicoroutine, keeping the stack frame and execution state
+                        |  <Identifier> '<>' <Identifier>                                                                   ! Swaps the contents of the variables
+                        |  'save' <Identifier>                                                                              ! Saves the current value of the variable; syntactic sugar for manipulating a temporary variable
+                        |  'undo' <Identifier>                                                                              ! Reverts the variable to its saved value; syntactic sugar for manipulating a temporary variable
+                        
+! More Info on Measurements, Units, and States:
+! Measurements define a category of interchangable units that measure the same kind of quantity, such as length, mass, or time
+! Derived measurements name measurement combinations, such as area (length * legnth), or volume (length * length * length)
+! Absolute measurements are measurements of an absolute qunatity, such as location, that are based on a relative measurement, such as length; absolute and relative measurements satisfy the following properties: absolute + absolute = relative, relative + relative = relative, and absolute + relative = absolute
+! Sub-measurements subdivide different cases, such as height or width, of the same masurement, such as length, and are written as follows: 'name of parent' hyphen 'name of sub', e.g. _Length-Width; sub-measures may be used anywhere their ancestors are valid
+! Units define standardized quantities of measurements, such as inches, meters, grams, tons, seconds, or hours, and are calculated with respect to an agreed base unit
+! States enumerate discreet states of a quality, such as positive, negative, uppercase, lowercase, letter, numeral, symbol, sanitized, unsanitized, etc.
+! Non-default states include an expression that converts values to that state, and list the operations that invalidate that state
+! Measurements and constant units are compile-time constructs; states and variable units are analyzed at compille-time, but state and variable unit applications, which can mutate variables, occur at runtime
+
+<Public Opt>           ::= '^'       ! Public scope
+                        |  ! Nothing ! Private scope
+
+<Variable Declaration> ::= Identifier '=' <Full Type>                      ! Variable declaration; variables are private or local in scope; all scopes are allowed by the parser, deferring the work to semantic analysis for smarter error reporting 
+                        |  Identifier '=' <Full Type> ':' <Expression>     ! Variable declaration and initialization
+                        |  Identifier ':' <Expression>                     ! Variable declaration and initialization using type inference
+                        |  <Collection Item>
+                        |  <Collection Item> ':' <Expression>
+                        
+<Collection Item>      ::= Identifier 'from' <Value> ! Restricts the value of the variable to an element from an enumerator, or to a numeric range
+
+<Abstract Definition>  ::= FuncKeyword Identifier <Func Tuple Type> '=>' <Full Type>       ! Function/constructor header, used with attributes
+                        |  FuncKeyword Identifier <Func Tuple Type>
+                        |  FuncKeyword 'set' Identifier <Func Tuple Type> '=>' <Full Type> ! A function set (aka generic method); use extension modules to provide concrete implementations; use 'require' syntax to require as part of an attribute
+                        |  FuncKeyword 'set' Identifier <Func Tuple Type>
+                        |  'prop' 'get' 'set' Identifier '=' <Full Type>                   ! Property header, used with attributes
+                        |  'prop' 'get' Identifier '=' <Full Type>
+                        |  'prop' 'set' Identifier '=' <Full Type>
+                        |  'type' <Type Name> <Full Block Opt>                             ! Attribute (aka interface) definition
+                       
+! ========================================
+! Expression Rules: Functional Expressions
+! ----------------------------------------
+              
+<Expressions>    ::= <Expressions> ',' <nls Opt> <Expression>
+                  |  <Expression>
+
+<Expression>     ::= <Expression> 'if' <Lambda Exp> 'else' <Lambda Exp> ! Conditional expression
+                  |  <Expression> 'else' <Lambda Exp>
+                  |  <Lambda Exp>
+
+<Lambda Exp>     ::= <Identifier> '->' <Or Exp> ! Anonymous function
+                  |  <Or Exp>
+                  
+! ========================================
+! Expression Rules: Boolean Operations
+! ----------------------------------------
+
+<Or Exps>        ::= <Or Exps> ',' <nls Opt> <Or Exp>
+                  |  <Or Exp>
+
+<Or Exp>         ::= <Or Exp> 'or' <nls Opt> <And Exp> ! Short-circuited
+                  |  <And Exp>
+
+<And Exp>        ::= <And Exp> 'and' <nls Opt> <Quantifier Exp> ! Short-circuited
+                  |  <Quantifier Exp>
+               
+<Quantifier Exp> ::= 'any' <Cond Exp> ! Collection 'or'; returns true if at least one element is true; e.g. any IntSequence\ >= 0
+                  |  'all' <Cond Exp> ! Collection 'and'; returns true if all elements are true; e.g. all IntSequence\ >= 0
+                  |  <Cond Exp>
+
+<Cond Exp>       ::= <Cond Exp> <Condition> ! Equality and inequality tests
+                  |  <Concat Exp>
+                    
+<Condition>      ::= '=' <Concat Exp>
+                  |  InequalityOperator <Concat Exp>
+                  |  'is' 'within' <Concat Exp> 'of' <Concat Exp>
+                  
+! ========================================
+! Expression Rules: Common Operators
+! ----------------------------------------
+
+<Concat Exps>    ::= <Concat Exps> ',' <nls Opt> <Concat Exp>
+                  |  <Concat Exp>
+
+<Concat Exp>     ::= <Concat Exp> ConcatenationOperator <nls Opt> <Add Exp> ! Concatenation
+                  |  <Add Exp>
+
+<Add Exp>        ::= <Add Exp> '+' <Conv Exp>  ! Addition
+                  |  <Add Exp> '-' <Conv Exp>
+                  |  <Conv Exp>
+              
+<Conv Exp>       ::= <Conv Exp> 'as' <Measure Identifier>
+                  !|  <Conv Exp> 'as' <Type>
+                  |  <Mult Exp>
+               
+<Mult Exp>       ::= <Mult Exp> MultiplyOperator <Binary Exp>
+                  |  <Binary Exp>
+
+<Binary Exp>     ::= <Binary Exp> <Full Name> <Negate Exp> ! Allows you to write out other binary operators such as 'mod', 'rsh', and so on in their natural form
+                  |  <Negate Exp>
+
+<Negate Exp>     ::= '-' <Expon Exp>       ! Negation
+                  |  '~' <Expon Exp>       ! Logical not
+                  !|  'bit-not' <Expon Exp> ! Bitwise not
+                  |  <Expon Exp>
+              
+<Expon Exp>      ::= <Expon Exp> '^' <Box Exp> ! Exponentiation
+                  |  <Box Exp>
+                  
+! ========================================
+! Expression Rules: Special Expressions
+! ----------------------------------------
+
+<Box Exp>        ::= <Value> '[' <Expression> ']' ! Creates a boxed object, where the outer object can be discarded automatically as needed
+                  |  <Value>
+               
+! More Info on Boxes:
+! Boxes are generic structures for handling encapsulated data, such as IP packets, indexed elements in 'for each' loops, MP3s with IDE tags, and XML trees, to name a few
+! Boxes can be nested inside each other, arbitrarily-deep, to represent structures such as IP packets and XML trees
+! When passing a box to a function that uses only the inner object(s), PIE discards the encapsulating objects (from the outside in) to match the required datatype
+! For instance, a box with datatype Packet[Segment[t] can be used as is anywhere a Segment[t] or t is required; to acheive this conversion PIE removes outer layers until the desired datatype is reached
+
+! ========================================
+! Value Rules: Values
+! ----------------------------------------
+
+<Value>             ::= <Identifier>
+                     |  <Measure Identifiers>
+                     |  <Anonymous Block>          ! Anonymous function block
+                     |  <Literal> '.' <Identifier>
+                     |  <Literal>
+                     !|  'empty'
+
+<Literal>           ::= '[' <Expressions> ']'                                    ! Sequence
+                     |  'm[' <Matrix Expressions> ']'                            ! Matrix
+                     |  'm[' <Dimensions> ']'                                    ! Empty matrix of the specified dimensions
+                     |  '[' <Map Exp> ']'                                        ! Map/group/filter
+                     |  'm[' <Map Exp> ']'
+                     |  '[' <Map Exp> 'by' <Or Exps> ']'                         ! Sorted map/group/filter
+                     |  '{' <Expressions> '}'
+                     |  '{' <Lookup Pairs> '}'
+                     |  '{' <Expression> 'to' <Expression> '}'                   ! Range; implicitly convertible to set, bag, range, and span objects
+                     |  '{' <Expression> 'to' <Expression> 'by' <Expression> '}' ! Step-wise range (e.g. 2 to 10 by 2 produces 2, 4, 6, 8, 10)
+                     |  '{' <Map Exp> '}'                                        ! Map/group/filter
+                     |  StringLiteral
+                     |  FloatingPointLiteral
+                     |  IntegerLiteral
+                     |  ScientificLiteral
+                     |  BooleanLiteral
+                     
+! ========================================
+! Value Rules: Tuples
+! ----------------------------------------
+
+<Tuple>             ::= '(' <Named Expressions> ')'
+                     |  '(' ')'
+                     
+<Named Expressions> ::= <Named Expressions> ',' <nls Opt> <Named Expression>
+                     |  <Named Expression>
+                      
+<Named Expression>  ::= Identifier ':' <Expression>
+                     |  <Expression>
+                     |  Identifier ':' '_' 'as' <full Type>
+                     |  '_' 'as' <Full Type>
+                     |  '_'
+
+! More Info on Function Application:
+! Partial function application takes a function and fills in some or all of the arguments before it is called
+! To call a partial function, you fill-in any remaining arguments, just like a regular function call
+! Regular functions are not modified in any way when they become partial functions; they execute in exactly the same manner as if you had supplied all of the arguments at once
+
+! ========================================
+! Value Rules: Collections
+! ----------------------------------------
+
+<Dimensions>         ::= <Dimensions> 'by' <Expression>
+                      |  <Expression> 'by' <Expression>
+                     
+<Matrix Expressions> ::= <Matrix Expressions> ';' <Expressions>
+                      |  <Expressions>
+                     
+<Map Exp>            ::= 'for' 'each' <Names> <nls Opt> 'from' <Concat Exps> <nls Opt> <Group Filter Opt> ':' <nls Opt> <Expression>
+                      
+<Group Filter Opt>   ::= <Filter> <nls Opt> <Groups> <nls Opt>
+                      |  <Groups> <nls Opt> <Filter> <nls Opt>
+                      |  <Filter> <nls Opt>
+                      |  <Groups> <nls Opt>
+                      | ! Nothing
+                      
+<Filter>             ::= 'where' <Or Exp>
+
+<Groups>             ::= <Groups> <Group>
+                      |  <Group>
+                      
+<Group>              ::= 'by' <Or Exps>
+
+<Lookup Pairs>       ::= <Lookup Pairs> ',' <nls Opt> <Expression> ':' <Expression>
+                      |  <Expression> ':' <Expression>
+               
+! ========================================
+! Identifier Rules: Identifier References
+! ----------------------------------------
+
+<Identifiers>        ::= <Identifiers> ',' <nls Opt> <Identifier>
+                      |  <Identifier>
+
+<Identifier>         ::= <Identifier> '.' Identifier           ! Child of a parent object/namespace
+                      !|  <Identifier> '.' IdentifierKeyword
+                      |  <Identifier> <Tuple>                  ! The arguments of a function call
+                      |  <Identifier> '.' <Tuple>              ! The index of an element or subset of a collection or tuple, using 1-based indexing
+                      |  <Identifier> '.' IntegerLiteral
+                      |  <Identifier> '.' '[' <Expression> ']' ! Gets the specified layer of a boxed object by numeric index, where 0 is the original (unboxed) object
+                      |  <Identifier> '\'                      ! Gets the value of a monad
+                      |  Identifier
+                      !|  IdentifierKeyword
+                      |  <Tuple>                               ! Plain tuple (i.e. not a function call or element of a collection)
+                      |  <Identifier> '!'                      ! Forces full evaluation; useful for ensuring side effects in logical operators
+
+! ========================================
+! Identifier Rules: Names
+! ----------------------------------------
+
+<Full Name>           ::= <Full Name> '.' Identifier ! Name + object/namespace
+                       |  Identifier
+
+<Names>               ::= <Names> ',' Identifier
+                       |  Identifier
+               
+!<Identifier Keyword>  ::= 'self'            ! The identifier on the left side of an assignment statement (e.g. i <- self + 1), or the property in a property definition
+!                       |  '@' 'self'        ! The identifier on the left side of an assignment statement, or the backing variable of a property (e.g. prop P: get @self set @self)
+!                       |  'result'          ! Placeholder variable name for the result of a function; used in assignment statements in the function body, in place of a 'return' statement
+!                       !|  'this'            ! The current object instance; used inside a type definition to access instance members (properties, functions, etc.)
+!                       |  'args'            ! the arguments in a function definition
+                                     
+<Measure Identifiers> ::= <Measure Identifiers> <Measure Identifier> ! Annotation for units and measures
+                       |  <Measure Identifier>
+
+<Measure Identifier>  ::= '_' <Full Name>
+                       |  '_' <Full Name> <Tuple> ! Absolute measure/unit; for units, the tuple specifies the offset from the relative unit; for measures, an empty tuple indicates an absolute measure
+                       |  '_' IntegerLiteral
+                       !|  '_' <Tuple>
+                      
+! ========================================
+! Type Rules: Higher-Order Types
+! ----------------------------------------
+
+<Func Tuple Type>       ::= <Tuple Type>
+                         |  '(' ')'
+
+<Tuple Type>            ::= '(' <Tuple Type Items> <Filter> ')'
+                         |  '(' <Tuple Type Items> ')'
+
+<Tuple Type Items>      ::= <Tuple Type Items> ',' <Tuple Type Item>
+                         |  <Tuple Type Item>
+
+<Tuple Type Item>       ::= <Variable Declaration>
+                         |  <Full Type>
+
+! ========================================
+! Type Rules: Type Expressions
+! ----------------------------------------
+
+<Full Type>        ::= <Type Opt> '=>' <Full Type> ! The datatype of functions
+                    |  <Type Opt>
+                    
+<Type Opt>         ::= <Option Type>
+                    !|  'nothing'                               ! Used to annotate a function with no return value
+                    |  '(' ')'                                 ! Used to annotate a function with no parameters
+
+<Option Type>      ::= <Option Type> '|' <Collection Type>     ! Option type (i.e. one or the other); unless case matched, option types expose only the common functionality among all the types
+                    |  <Collection Type>
+                                        
+<Collection Type>  ::= <Collection Type> '...' <Collection Item> ! Syntactic sugar for seq(t, n = count where any Set\ = n); example: 'char ... n in {1 to 255}' becomes 'seq(char, n = count where any {1 to 255}\ = n)'
+                    |  <Collection Type> '...' <Value>           ! Syntactic sugar for seq(t, n = count); example: 'char ... n' becomes 'seq(char, n = count)'
+                    |  <Extended Type>
+                    
+<Extended Type>    ::= <Extended Type> '+' <Full Name> ! A datatype with an extension module applied
+                    |  <Boxed Type>
+
+<Boxed Type>       ::= <Measured Type> '[' <Full Type> ']' ! Syntactic sugar for Box(Outer = <t1>, Inner = <t2>)
+                    |  <Measured Type>
+                    
+<Measured Type>    ::= <Shared Type> <Measure Identifiers> ! Type with a measurement; e.g. int_length, float_mass, char_letter_case-lower, (char ... n)_xml
+                    |  <Shared Type>
+                    
+<Shared Type>      ::= <Modified Type> '<>' ! Allows other variables to get a read/write reference to the object; the object is, in the general case, stored on the heap
+                    |  <Modified Type> ':>' ! Allows other variables to get a read-only reference to the object; the object is, in the general case, stored on the heap; read-only references preserve the local functional purity of the variables's scope
+                    |  <Modified Type> '<:' ! Allows other variables to get a write-only reference to the object; the object is, in the general case, stored on the heap; write-only references preserve the external functional purity of the referants' scopes
+                    |  <Modified Type>      ! Prevents referencing; the object is stored directly on the stack, in CPU registers, etc. when possible
+
+<Modified Type>    ::= '^' <Modified Type>  ! Strong reference
+                    |  '@' <Modified Type>  ! Weak reference
+                    !|  '<>' <Modified Type> ! Read/write, used with references
+                    |  '<:' <Modified Type> ! Read-only, used with references
+                    |  ':>' <Modified Type> ! Write-only, used with references
+                    |  '~' <Modified Type>  ! Queued, asynchronous access
+                    |  '=' <Modified Type>  ! Constant (immutable) value
+                    |  <Optional Type>
+                    
+<Optional Type>    ::= <Optional Type> '?'
+                    |  <Type>
+                    
+<Attributes>       ::= <Attributes> '#' <Measured Type> ! A combination of attributes
+                    |  '#' <Measured Type>              ! An attribute (abstract, structural datatype)
+
+!<Attribute>        ::= '#' <Measured Type>    ! An attribute (abstract, structural datatype)
+!                    |  !'#' 'has' <Tuple Type> ! An anonymous attribute consisting of the named items listed in the tuple
+
+! More Info on Attributes:
+! Attributes are structurally-typed interfaces; in other words, abstract (unimplemented) datatype definitions
+! Attribute names always begin with a '#' (hashtag); prepending a '#' to a normal datatype creates an attribute from that datatype, or rather, invokes structural-typing with that datatype, as opposed to nominal-typing
+                    
+! ========================================
+! Type Rules: Type Values
+! ----------------------------------------
+                    
+<Type>           ::= <Full Name>
+                  |  <Full Name> <Tuple Type>
+                  |  <Tuple Type>
+                  |  <Attributes> Identifier
+                  |  <Attributes>
+                  |  '_'                      ! Blank annotation; enables type inferrence
+
+<Type Names>     ::= <Type Names> ',' <Type Name>
+                  |  <Type Name>
+
+<Type Name>      ::= '#' <Base Type Name>
+                  |  <Base Type Name>
+                    
+<Base Type Name> ::= Identifier <Tuple Type>
+                  |  Identifier
