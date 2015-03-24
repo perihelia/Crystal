@@ -1,8 +1,8 @@
 ! Written using (and testable with) GOLD Parser Builder (www.goldparser.org)
 
-"Name"           = 'Jet' ! Formerly known as PIE
+"Name"           = 'Jet'
 "Author"         = 'Chad Lechner'
-"Version"        = '1.0 (WIP)' ! Formerly PIE 1.0 Draft (Generation 3)
+"Version"        = '1.0 (WIP)'
 "About"          = 'Jet is a general-purpose, high-level, native language for people off-put by let bindings, inheritance hierarchies, and semicolons.  As in airline travel, Jet provides safety and security through comprehensive pre-flight testing and security screening, high-speed travel as the crow flies, first-class conveniences, and very high crash resistance.  It takes inspiration from C#, Common Lisp, D, E, F#, Haskell, Python, Scala, and Xanadu.'
 
 "Case Sensitive" = 'True'
