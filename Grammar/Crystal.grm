@@ -24,9 +24,7 @@
 ! ----------------------------------------
 
 Whitespace = {WS}+ !| '...' {WS}* ({CR}{LF} | {CR} | {LF} | {LS}) {WS}* ! Whitespace characters ({WS}) or a line continuation ('...')
-
-NewLine    = {CR}{LF} | {CR} | {LF} | {LS}                             ! Carriage return, line feed, or both, or Unicode line separator
-
+NewLine    = {CR}{LF} | {CR} | {LF} | {LS}                              ! Carriage return, line feed, or both, or Unicode line separator
 Comment Line  = '`'
 
 ! ========================================
