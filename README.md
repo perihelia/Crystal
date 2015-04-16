@@ -1,2 +1,2 @@
-# Jet
-Jet Programming Language
+# Crystal
+Crystal Programming Language
