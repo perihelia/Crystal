@@ -3,7 +3,7 @@
 "Name"           = 'Crystal'
 "Author"         = 'Chad Lechner'
 "Version"        = '1.0 (WIP)'
-"About"          = 'Crystal is a general-purpose, high-level, compiled language emphasizing clean, modular, reusable code.  It takes inspiration from C#, CLOS, D, F#, Haskell, Python, Ruby, Scala, and Xanadu.'
+"About"          = 'Crystal is a general-purpose, high-level language designed for safety and performance, emphasizing clean, modular, reusable code.  It takes inspiration from C++, C#, CLOS, D, F#, Haskell, Python, Ruby, Rust, Scala, Swift, and Xanadu.'
 
 "Case Sensitive" = 'True'
 "Start Symbol"   = <Start>
@@ -12,9 +12,9 @@
 ! Character Set Definitions
 ! ----------------------------------------
 
-{WS}           = {Whitespace} - {CR} - {LF}                                      ! Defined as all whitespace characters except carriage return and line feed, which denote new lines
-{String Char}  = {Printable} + {Printable Extended} + {HT} + {CR} + {LF} - ["]
-{Name Char}    = {Printable} + {Printable Extended} - {HT} - {CR} - {LF} - ['']
+{WS}           = {Whitespace} - {CR} - {LF}                                     ! Defined as all whitespace characters except carriage return and line feed, which denote new lines
+{String Char}  = {Printable} + {Printable Extended} + {HT} + {CR} + {LF} - ["]  ! All "printable" Unicode chars (i.e. no control codes) plus horizontal tab, carriage return, and line feed, minus double quote marks
+{Name Char}    = {Printable} + {Printable Extended} - {HT} - {CR} - {LF} - [''] ! Same as 'String Char' minus newlines aznd horizontal tab
 {Uppercase}    = [ABCDEFGHIJKLMNOPQRSTUVWXYZ]
 {Lowercase}    = [abcdefghijklmnopqrstuvwxyz]
 {Hex Char}     = {Number} + [ABCDEFabcdef]
@@ -31,9 +31,9 @@ Comment Line  = '`'
 ! Keyword Terminals
 ! ----------------------------------------
 
-AssignmentOperator    = '<-' | '++' | '--' | '**' | '//' | '^^^^' ('n' | 's' | 't' | '_' | '.')? ! Plain assignment, or with addition, subtraction, multiplication, division, or concatenation, respectively
-ConcatenationOperator = '^^' | '^^' ('n' | 's' | 't' | '_' | '.') ! Concatenate without a joiner, or with a newline, space, tab, underscore, or dot (full stop) in between, respectively
-FuncKeyword           = 'cons' | 'func'
+AssignmentOperator    = '<-' | '++' | '--' !| '**' | '//' | '^^^^' ('n' | 's' | 't' | '_' | '.')? ! Plain assignment, or with addition, subtraction, multiplication, division, or concatenation, respectively
+ConcatenationOperator = '^^' | '^^' ('n' | 's' | 't' | '_' | '.' | ',') ! Concatenate without a joiner, or with a newline, space, tab, underscore, dot (full stop), or comma in between, respectively
+FuncKeyword           = 'cons' | 'cleanup' | 'func'
 !IdentifierKeyword     = 'args' | 'result' | 'self' | '@self'
 InequalityOperator    = '~=' | '<' | '>' | '<=' | '>='
 MultiplyOperator      = '*' | '/'
@@ -130,7 +130,7 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
 <Case Block>    ::= 'val' <Expressions> <Internal Block Opt>            ! Match a value
                  |  'cond' <Or Condition> <Internal Block Opt>          ! Match a condition
                  |  'ref' <Expressions> <Internal Block Opt>            ! Match a reference
-                 |  'type' <Full Type> <Internal Block Opt>             ! Match a datatype (for option types)
+                 |  'type' <Full Type> <Internal Block Opt>             ! Match a datatype (for variant types)
                  |  'else' <Internal Block Opt>                         ! Default case
                  |  'val' <Expressions> ':' <Internal Statement> <ss>
                  |  'cond' <Or Condition> ':' <Internal Statement> <ss>
@@ -160,78 +160,87 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
 
 <Statement>            ::= <Internal Statement>
                         |  'enum' Identifier ':' <Expression>                        ! Enumeration; a set of discreet, named values, such as months, or days of the week; e.g. enum Weekdays: {Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday}
-                        |  'head' <Abstract Definition>                              ! Used to define members of an attribute (aka 'head type')
-                        |  'require' <Type Names>                                    ! Adds the requirements of another attribute(s), e.g. 'head type #IO; require #Reader, #Writer'; or requires a specific implementation of a function set, e.g. 'head type #Number; require Add(this, this)'
+                        |  'head' <Abstract Definition>                              ! Used to define members of an interface (aka 'head type')
+                        |  'require' <Type Names>                                    ! Adds the requirements of another interface(s), e.g. 'head type #IO; require #Reader, #Writer'; or requires a specific implementation of a function set, e.g. 'head type #Number t; require Add(t, t)'
                         |  'type' <Type Name> <Full Block Opt>                       ! Datatype (aka class) definition
-                        |  'type' <Type Name> 'extends' <Full Type> <Full Block Opt> ! Extension module definition; extensions can: add new public members to a datatype, and override or augment existing public members of a datatype
-                        |  'type' <Type Name> ':' <Full Type>                        ! Datatype alias; useful for naming attribute combinations, option types, boxed types, and types with extensions applied
+                        |  'type' <Type Name> 'extends' <Full Type> <Full Block Opt> ! Datatype fragment definition; extends an existing datatype/interface
+                        |  'type' <Type Name> ':' <Full Type>                        ! Datatype alias; useful for naming interface combinations, option types, boxed types, and types with extensions applied
+
+! More Info on Datatype Fragments:
+! Datatype fragments allow the expansion of datatypes by appending imperative code to exisitng members, replacing implementations of existing members, and/or adding new members
+! Fragments cannot access private members of the parent type, nor hide existing public members
+! Fragments are not subclasses or subtypes, but rather, similar to aspects; they intercept function calls on their parent type, executing their own code instead of, before, or after their parent's
+! Because fragments do not inherit functionality like subclasses do, you can specify interfaces as parents, allowing you to extend multiple datatypes with just a single fragment
+! Fragments are not standalone types; use '+' syntax to specify their parents in type annotations; e.g. x = Datatype + Fragment1 + Fragment2 + FragmentN: value
 
 <Internal Statements>  ::= <Internal Statements> <ss> <Internal statement>
                         |  <Internal Statement>
                         
 <Internal Statement>   ::= <Intratype Statement>
-                        |  '@' Identifier <Internal Statement>         ! e.g. @after (imperative code appended to the function), @before (imperative code prepended to the function), @SomeException, @final (try-catch finally block), @hide (private member), @implicit (implicitly-defined unit), @replace (public member override), @test (tests a pure function during compilation)
-                        |  '@' Identifier <Tuple> <Internal Statement> ! e.g. @throws(Error-Disk-Read, Error-Disk-Write) (*programmer enforced* checked excpetions)
+                        |  '@' Identifier <Internal Statement>         ! e.g. @after (imperative code appended to the function), @before (imperative code prepended to the function), @SomeException, @final (try-catch finally block), @implicit (implicitly-defined unit), @replace (public member override), @test (tests a pure function during compilation; written as a variable initialization)
+                        !|  '@' Identifier <Tuple> <Internal Statement> ! e.g. @throws(Error-Disk-Read, Error-Disk-Write) (*programmer designated*, that's the key here, checked excpetions)
 
 <Anonymous Block>      ::= 'code' <Block Opt> ! A code block, useful for scoping local variables, and writing inline imperative code
                   
-<Intratype Statement>  ::= FuncKeyword Identifier <Func Tuple Type> '=>' <Full Type> <Block Opt>               ! Function definition with return value
-                        |  FuncKeyword Identifier <Func Tuple Type> <Block Opt>                                ! Function definition with no return value
-                        |  FuncKeyword <Func Tuple Type> '=>' <Full Type> <Block Opt>                          ! Nameless function/anonymous-tuple constructor, e.g. charSequence.(4) or coords: (x: 3.0, y: -1.0)
+<Intratype Statement>  ::= FuncKeyword Identifier <Func Tuple Type> '=>' <Full Type> <Block Opt>                 ! Function definition with return value
+                        |  FuncKeyword Identifier <Func Tuple Type> <Block Opt>                                  ! Function definition with no return value
+                        |  FuncKeyword <Func Tuple Type> '=>' <Full Type> <Block Opt>                            ! Nameless function/anonymous-tuple constructor, e.g. charSequence.(4) or coords: (x: 3.0, y: -1.0)
                         |  FuncKeyword <Func Tuple Type> <Block Opt>
-                        |  FuncKeyword <Func Tuple Type> '=>' <Full Type> 'extends' <Full Name> <Block Opt>    ! Overloads a generic method (aka 'func set')
-                        |  FuncKeyword <Func Tuple Type> 'extends' <Full Name> <Block Opt>
-                        |  'measure' <Measure Identifier>                                                      ! Base measurement (e.g. length, mass, time, data) and the datatype it is associated with
-                        |  'measure' <Measure Identifier> ':' <Expression>                                     ! Derived measurement (e.g. volume, force, pixel-area, voltage) defined as a combination of other measurements
-                        |  'measure' <Measure Identifier> 'of' <Measure Identifier>                            ! Sub-measurement (e.g. _Width of _Length, _Height of _Length)
-                        |  'state' <Measure Identifier>                                                        ! Base or default state
-                        |  'state' <Measure Identifier> ':' 'apply' <Expression> 'reject' <Expressions>        ! State (e.g. negative, letter, uppercase); the 'apply' expression specifies how to reach the state (e.g. Char.ToUppercase()), and the reject expressions specify operations that invalidate the state
-                        |  'prop' Identifier '=' <Full Type> <ss> 'get' <Internal Block Opt> 'set' <Block Opt> ! Getter/setter property; propeties are needed to access variables publicly; only 1 'end' keyword is used (instead of the 3 closing braces in C#) for a simpler, lighter feel
-                        |  'prop' Identifier '=' <Full Type> <ss> 'get' <Block Opt>                            ! Getter (read-only) property
-                        |  'prop' Identifier '=' <Full Type> <ss> 'set' <Block Opt>                            ! Setter (write-only) property
-                        |  FuncKeyword Identifier <Func Tuple Type> '=>' <Full Type> ':' <Expression>          ! Mix of one-liner and block definition syntaxes
-                        |  FuncKeyword Identifier <Func Tuple Type> ':' <Expression>                           ! One-line function definition
+                        |  FuncKeyword <Func Tuple Type> '=>' <Full Type> 'extends' <Full Type> <Block Opt>      ! Overloads a generic method (aka 'func set') or extends an existing type
+                        |  FuncKeyword <Func Tuple Type> 'extends' <Full Type> <Block Opt>
+                        |  'measure' <Measure Identifier>                                                        ! Base measurement (e.g. length, mass, time, data) and the datatype it is associated with
+                        |  'measure' <Measure Identifier> ':' <Expression>                                       ! Derived measurement (e.g. volume, force, pixel-area, voltage) defined as a combination of other measurements
+                        |  'measure' <Measure Identifier> 'of' <Measure Identifier>                              ! Sub-measurement (e.g. _Width of _Length, _Height of _Length)
+                        !|  'state' <Measure Identifier>                                                          ! Base or default state
+                        |  'state' <Measure Identifier> ':' 'apply' <Expression> 'reject' <Expressions>          ! State (e.g. negative, letter, uppercase); the 'apply' expression specifies how to reach the state (e.g. Char.ToUppercase()), and the reject expressions specify operations that invalidate the state
+                        |  'prop' Identifier '=' <Full Type> <ss> 'get' <Internal Block Opt> 'set' <Block Opt>   ! Getter/setter property; propeties are needed to access variables publicly; only 1 'end' keyword is used (instead of the 3 closing braces in C#) for a simpler, lighter feel
+                        |  'prop' Identifier '=' <Full Type> <ss> 'get' <Block Opt>                              ! Getter (read-only) property
+                        |  'prop' Identifier '=' <Full Type> <ss> 'set' <Block Opt>                              ! Setter (write-only) property
+                        |  FuncKeyword Identifier <Func Tuple Type> '=>' <Full Type> ':' <Expression>            ! Mix of one-liner and block definition syntaxes
+                        |  FuncKeyword Identifier <Func Tuple Type> ':' <Expression>                             ! One-line function definition
                         |  FuncKeyword <Func Tuple Type> '=>' <Full Type> ':' <Expression>
                         |  FuncKeyword <Func Tuple Type> ':' <Expression>
-                        |  FuncKeyword <Func Tuple Type> '=>' <Full Type> 'extends' <Full Name> ':' <Expression> ! Overloads a generic method (aka 'func set')
-                        |  FuncKeyword <Func Tuple Type> 'extends' <Full Name> ':' <Expression>
-                        |  'prop' Identifier '=' <Full Type> ':' 'get' <Expression> 'set' <Identifier>         ! One-line getter/setter property
-                        |  'prop' Identifier '=' <Full Type> ':' 'get' <Expression>                            ! One-line getter (read-only) property
-                        |  'prop' Identifier '=' <Full Type> ':' 'set' <Identifier>                            ! One-line setter (write-only) property
-                        |  'prop' Identifier ':' 'get' <Expression> 'set' <Identifier>                         ! One-line getter/setter property; useful for exposing variables publicly, as in 'prop Name: get name set name'
-                        |  'prop' Identifier ':' 'get' <Expression>                                            ! One-line getter (read-only) property
-                        |  'prop' Identifier ':' 'set' <Identifier>                                            ! One-line setter (write-only) property
-                        !|  'unit' <Measure Identifier> '=' <Measure Identifier>                                ! Unit of measure defined as the base unit of a measure
-                        |  'unit' <Measure Identifier> ':' <Concat Exps>                                       ! Unit of measure (defined as the base unit of a measure or a derived unit in terms of an existing unit(s))
-                        |  'shared' <Variable Declaration>                                                     ! Variable shared among all instances of the datatype definition; i.e. 'static' in other languages
+                        |  FuncKeyword <Func Tuple Type> '=>' <Full Type> 'extends' <Full Type> ':' <Expression> ! Overloads a generic method (aka 'func set') or extends an existing type
+                        |  FuncKeyword <Func Tuple Type> 'extends' <Full Type> ':' <Expression>
+                        |  'prop' Identifier '=' <Full Type> ':' 'get' <Expression> 'set' <Identifier>           ! One-line getter/setter property
+                        |  'prop' Identifier '=' <Full Type> ':' 'get' <Expression>                              ! One-line getter (read-only) property
+                        |  'prop' Identifier '=' <Full Type> ':' 'set' <Identifier>                              ! One-line setter (write-only) property
+                        |  'prop' Identifier ':' 'get' <Expression> 'set' <Identifier>                           ! One-line getter/setter property; useful for exposing variables publicly, as in 'prop Name: get name set name'
+                        |  'prop' Identifier ':' 'get' <Expression>                                              ! One-line getter (read-only) property
+                        |  'prop' Identifier ':' 'set' <Identifier>                                              ! One-line setter (write-only) property
+                        !|  'unit' <Measure Identifier> '=' <Measure Identifier>                                  ! Unit of measure defined as the base unit of a measure
+                        |  'unit' <Measure Identifier> ':' <Concat Exps>                                         ! Unit of measure (defined as the base unit of a measure or a derived unit in terms of an existing unit(s))
+                        !|  'shared' <Variable Declaration>                                                       ! Variable shared among all instances of the datatype definition; i.e. 'static' in other languages
                         |  <Variable Declaration>
-                        |  'build' 'shared' <Variable Declaration> <Block Opt>
-                        |  'build' <Variable Declaration> <Block Opt>                                                       ! Allows you to initialize a variable, then set properties on it without specifying the variable name all of the time
-                        |  <Identifiers> AssignmentOperator <Expression>                                                    ! Assignment
-                        |  <Identifier> <Tuple>                                                                             ! Necessary for impure, no-result function calls
-                        |  <If Block>                                                                                       ! Conditional ("if") block
-                        |  'match' <Expression> <ss> <Case Blocks> 'end'                                                    ! Similar to a "switch" block
-                        |  <Anonymous Block>                                                                                ! Marks a local code block; useful for scoping local variables and the 'repeat' keyword
-                        |  'for' 'each' <Collection Item> <Block Opt>                                                       ! Iteration block; iterates over a collection or #Iterable
-                        |  'for' 'each' <Collection Item> <Internal Block Opt> 'else' <Block Opt>                           ! Iteration block; iterates over a collection or #Iterable, executing the 'else' block if the collection/#Iterable is empty
+                        !|  'build' 'shared' <Variable Declaration> <Block Opt>
+                        |  'build' <Variable Declaration> <Block Opt>                                            ! Allows you to initialize a variable, then set properties on it without specifying the variable name all of the time
+                        |  <Identifiers> AssignmentOperator <Expression>                                         ! Assignment
+                        |  <Identifier>                                                                          ! Necessary for impure, no-result function calls
+                        |  <If Block>                                                                            ! Conditional ("if") block
+                        |  'match' <Expression> <ss> <Case Blocks> 'end'                                         ! Similar to a "switch" block
+                        |  <Anonymous Block>                                                                     ! Marks a local code block; useful for scoping local variables and the 'repeat' keyword
+                        |  'for' 'each' <Collection Item> <Block Opt>                                            ! Iteration block; iterates over a collection or #Iterable
+                        |  'for' 'each' <Collection Item> <Internal Block Opt> 'else' <Block Opt>                ! Iteration block; iterates over a collection or #Iterable, executing the 'else' block if the collection/#Iterable is empty
                         |  'for' 'each' <Collection Item> ':' <Internal Statement>
                         |  'leave'
-                        |  'leave' <Identifier>                                                                             ! Leaves the function call, as in a semicoroutine, keeping the stack frame and execution state
-                        |  <Identifier> '<>' <Identifier>                                                                   ! Swaps the contents of the variables
-                        |  'save' <Identifier>                                                                              ! Saves the current value of the variable; syntactic sugar for manipulating a temporary variable
-                        |  'undo' <Identifier>                                                                              ! Reverts the variable to its saved value; syntactic sugar for manipulating a temporary variable
+                        |  'leave' <Identifier>                                                                  ! Leaves the function call, as in a semicoroutine, keeping the stack frame and execution state
+                        |  <Identifier> '<>' <Identifier>                                                        ! Swaps the contents of the variables
+                        |  'save' <Identifier>                                                                   ! Saves the current value of the variable; syntactic sugar for manipulating a temporary variable
+                        |  'undo' <Identifier>                                                                   ! Reverts the variable to its saved value; syntactic sugar for manipulating a temporary variable
                         
 ! More Info on Measurements, Units, and States:
 ! Measurements define a category of interchangable units that measure the same kind of quantity, such as length, mass, or time
 ! Derived measurements name measurement combinations, such as area (length * legnth), or volume (length * length * length)
-! Absolute measurements are measurements of an absolute qunatity, such as location, that are based on a relative measurement, such as length; absolute and relative measurements satisfy the following properties: absolute + absolute = relative, relative + relative = relative, and absolute + relative = absolute
+! Absolute measurements are measurements whose units refer to an absolute quantity (e.g. temperature, spatial location) and are written with a pair of parentheses (containing an "offset value" in the case of units), e.g., _Temperature() for measures and _deg-F(32) for units
+! Absolute and relative measurements satisfy the following arithmetic properties: absolute + absolute = relative, relative + relative = relative, and absolute + relative = absolute
 ! Sub-measurements subdivide different cases, such as height or width, of the same masurement, such as length, and are written as follows: 'name of parent' hyphen 'name of sub', e.g. _Length-Width; sub-measures may be used anywhere their ancestors are valid
 ! Units define standardized quantities of measurements, such as inches, meters, grams, tons, seconds, or hours, and are calculated with respect to an agreed base unit
-! States enumerate discreet states of a quality, such as positive, negative, uppercase, lowercase, letter, numeral, symbol, sanitized, unsanitized, etc.
-! Non-default states include an expression that converts values to that state, and list the operations that invalidate that state
-! Measurements and constant units are compile-time constructs; states and variable units are analyzed at compille-time, but state and variable unit applications, which can mutate variables, occur at runtime
+! Units can also be computed based on run-time variables, in which case they are called variable units; one obvious use is currency conversion
+! States form a simple state machine that tells the compiler how to trasition between the discreet states of a piece of data
+! States include an expression that converts values to that state, and list the operations that invalidate that state
+! Measurements are compile-time metadata with no runtime overhead; unit conversions are rewritten to arithmetic operations during compilation; state transitions are detetcted and converted to function calls during compilation
 
-<Variable Declaration> ::= Identifier '=' <Full Type>                      ! Variable declaration; variables are private or local in scope; all scopes are allowed by the parser, deferring the work to semantic analysis for smarter error reporting 
+<Variable Declaration> ::= Identifier '=' <Full Type>                      ! Variable declaration; mutable variables are always local in scope;
                         |  Identifier '=' <Full Type> ':' <Expression>     ! Variable declaration and initialization
                         |  Identifier ':' <Expression>                     ! Variable declaration and initialization using type inference
                         |  <Collection Item>
@@ -239,14 +248,14 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
                         
 <Collection Item>      ::= Identifier 'from' <Concat Exp> ! Restricts the value of the variable to an element from an enumerator, or to a numeric range
 
-<Abstract Definition>  ::= FuncKeyword Identifier <Func Tuple Type> '=>' <Full Type>       ! Function/constructor header, used with attributes
+<Abstract Definition>  ::= FuncKeyword Identifier <Func Tuple Type> '=>' <Full Type>       ! Function/constructor header, used with interfaces
                         |  FuncKeyword Identifier <Func Tuple Type>
-                        |  FuncKeyword 'set' Identifier <Func Tuple Type> '=>' <Full Type> ! A function set (aka generic method); use extension modules to provide concrete implementations; use 'require' syntax to require as part of an attribute
+                        |  FuncKeyword 'set' Identifier <Func Tuple Type> '=>' <Full Type> ! A function set (aka generic method); use extension modules to provide concrete implementations; use 'require' syntax to require as part of an interface
                         |  FuncKeyword 'set' Identifier <Func Tuple Type>
-                        |  'prop' 'get' 'set' Identifier '=' <Full Type>                   ! Property header, used with attributes
+                        |  'prop' 'get' 'set' Identifier '=' <Full Type>                   ! Property header, used with interfaces
                         |  'prop' 'get' Identifier '=' <Full Type>
                         |  'prop' 'set' Identifier '=' <Full Type>
-                        |  'type' <Type Name> <Full Block Opt>                             ! Attribute (aka interface) definition
+                        |  'type' <Type Name> <Full Block Opt>                             ! interface (aka interface) definition
                        
 ! ========================================
 ! Expression Rules: Functional Expressions
@@ -283,6 +292,8 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
                   |  <Concat Exp>
                     
 <Condition>      ::= '=' <Concat Exp>
+                  |  '=' '='                                      ! For error-reporting purposes only; double '=' is not a valid operator
+                  |  '==='                                        ! For error-reporting purposes only; triple '=' is not a valid operator
                   |  InequalityOperator <Concat Exp>
                   |  'is' 'within' <Concat Exp> 'of' <Concat Exp>
                   
@@ -296,12 +307,12 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
 <Concat Exp>     ::= <Concat Exp> ConcatenationOperator <nls Opt> <Add Exp> ! Concatenation
                   |  <Add Exp>
 
-<Add Exp>        ::= <Add Exp> '+' <Conv Exp>  ! Addition
+<Add Exp>        ::= <Add Exp> '+' <Conv Exp> ! Addition
                   |  <Add Exp> '-' <Conv Exp>
                   |  <Conv Exp>
               
 <Conv Exp>       ::= <Conv Exp> 'as' <Measure Identifier>
-                  !|  <Conv Exp> 'as' <Type>
+                  |  <Conv Exp> 'as' <Type>
                   |  <Mult Exp>
                
 <Mult Exp>       ::= <Mult Exp> MultiplyOperator <Binary Exp>
@@ -310,8 +321,8 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
 <Binary Exp>     ::= <Binary Exp> <Full Name> <Negate Exp> ! Allows you to write out other binary operators such as 'mod', 'rsh', and so on in their natural form
                   |  <Negate Exp>
 
-<Negate Exp>     ::= '-' <Expon Exp>       ! Negation
-                  |  '~' <Expon Exp>       ! Logical not
+<Negate Exp>     ::= '-' <Expon Exp> ! Negation
+                  |  '~' <Expon Exp> ! Logical not
                   |  <Expon Exp>
               
 <Expon Exp>      ::= <Expon Exp> '^' <Box Exp> ! Exponentiation
@@ -325,10 +336,10 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
                   |  <Value>
                
 ! More Info on Boxes:
-! Boxes are generic structures for handling encapsulated data, such as IP packets, indexed elements in 'for each' loops, MP3s with IDE tags, and XML trees, to name a few
+! Boxes are generic data structures for handling encapsulated data, such as IP packets, indexed elements in 'for each' loops, MP3s with IDE tags, and XML trees, to name a few
 ! Boxes can be nested inside each other, arbitrarily-deep, to represent structures such as IP packets and XML trees
-! When passing a box to a function that uses only the inner object(s), PIE discards the encapsulating objects (from the outside in) to match the required datatype
-! For instance, a box with datatype Packet[Segment[t] can be used as is anywhere a Segment[t] or t is required; to acheive this conversion PIE removes outer layers until the desired datatype is reached
+! When passing a box to a function that uses only the inner object(s), encapsulating objects are discarded (from the outside in) to match the required datatype
+! For instance, the datatype Packet[Segment[t] can be used as is anywhere a Segment[t] or t is required; to acheive this conversion the outer layers are removed until the desired datatype is reached
 
 ! ========================================
 ! Value Rules: Values
@@ -347,11 +358,14 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
                      |  '[' <Map Exp> ']'                                        ! Map/group/filter
                      |  'm[' <Map Exp> ']'
                      |  '[' <Map Exp> 'by' <Or Exps> ']'                         ! Sorted map/group/filter
+                     |  '[' ']'                                                  ! Empty sequence
+                     |  'm[' ']'                                                 ! Empty Matrix
                      |  '{' <Expressions> '}'
                      |  '{' <Lookup Pairs> '}'
                      |  '{' <Expression> 'to' <Expression> '}'                   ! Range; implicitly convertible to set, bag, range, and span objects
                      |  '{' <Expression> 'to' <Expression> 'by' <Expression> '}' ! Step-wise range (e.g. 2 to 10 by 2 produces 2, 4, 6, 8, 10)
                      |  '{' <Map Exp> '}'                                        ! Map/group/filter
+                     |  '{' '}'                                                  ! Empty set
                      |  StringLiteral
                      |  FloatingPointLiteral
                      |  IntegerLiteral
@@ -452,58 +466,70 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
 
 <Tuple Type Items>      ::= <Tuple Type Items> ',' <Tuple Type Item>
                          |  <Tuple Type Item>
-
+                         
 <Tuple Type Item>       ::= <Variable Declaration>
+                         |  <Variant Type>
+
+<Variant Type>          ::= <Variant Type> <nls Opt> '|' <Full Type> ! Variant type (i.e. tagged union); use this to store more than one type of data in a variable; 
                          |  <Full Type>
 
 ! ========================================
 ! Type Rules: Type Expressions
 ! ----------------------------------------
 
-<Full Type>        ::= <Option Type> '=>' <Full Type> ! The datatype of functions
-                    |  <Option Type>
-
-<Option Type>      ::= <Option Type> '|' <Collection Type>     ! Option type (i.e. one or the other); unless case matched, option types expose only the common functionality among all the types
+<Full Type>        ::= <Collection Type> '=>' <Full Type> ! The datatype of functions
                     |  <Collection Type>
                                         
 <Collection Type>  ::= <Collection Type> '...' <Collection Item> ! Syntactic sugar for seq(t, n = count where any Set\ = n); example: 'char ... n in {1 to 255}' becomes 'seq(char, n = count where any {1 to 255}\ = n)'
                     |  <Collection Type> '...' <Value>           ! Syntactic sugar for seq(t, n = count); example: 'char ... n' becomes 'seq(char, n = count)'
                     |  <Extended Type>
                     
-<Extended Type>    ::= <Extended Type> '+' <Full Name> ! A datatype with an extension module applied
+<Extended Type>    ::= <Extended Type> '+' <Type> ! Datatype with a datatype fragment applied
+                    !|  <Extended Type> '-' <Full Name> ! Datatype with members hidden
                     |  <Boxed Type>
 
 <Boxed Type>       ::= <Measured Type> '[' <Full Type> ']' ! Syntactic sugar for Box(Outer = <t1>, Inner = <t2>)
                     |  <Measured Type>
                     
-<Measured Type>    ::= <Shared Type> <Measure Identifiers> ! Type with a measurement; e.g. int_length, float_mass, char_letter_case-lower, (char ... n)_xml
-                    |  <Shared Type>
+<Measured Type>    ::= <Restricted Type> <Measure Identifiers> ! Type with a measurement or state machine annotation; e.g. int_length, float_mass, char_letter_case-lower, (char ... n)_xml
+                    |  <Restricted Type>
                     
-<Shared Type>      ::= <Modified Type> '<>' ! Allows other variables to get a read/write reference to the object; the object is, in the general case, stored on the heap
-                    |  <Modified Type> ':>' ! Allows other variables to get a read-only reference to the object; the object is, in the general case, stored on the heap; read-only references preserve the local functional purity of the variables's scope
-                    |  <Modified Type> '<:' ! Allows other variables to get a write-only reference to the object; the object is, in the general case, stored on the heap; write-only references preserve the external functional purity of the referants' scopes
-                    |  <Modified Type>      ! Prevents referencing; the object is stored directly on the stack, in CPU registers, etc. when possible
-
-<Modified Type>    ::= '^' <Modified Type>  ! Strong reference
-                    |  '@' <Modified Type>  ! Weak reference
+<Restricted Type>  ::= <Modified Type> ':>' ! Restricts other variables to get a read-only reference to the object; the object is, in the general case, stored on the heap; read-only references preserve the local functional purity of the variables's scope
+                    |  <Modified Type>
+                    
+<Modified Type>    ::= '^' <Modified Type>  ! Strong reference (reference count is incremented; therefore, the referred object is always in scope)
+                    |  '&' <Modified Type>  ! "Suicide" reference (reference count is not incremented; when referred object goes out of scope, the referant also goes out of scope)
+                    |  '@' <Modified Type>  ! Weak reference (reference count is not incremented; referred object may go out of scope, nullifying the reference) 
+                    |  '~' <Modified Type>  ! Floating stack-reference (no reference counting; used for referencing items on the stack)
                     |  '<:' <Modified Type> ! Read-only, used with references
                     |  ':>' <Modified Type> ! Write-only, used with references
-                    |  '~' <Modified Type>  ! Queued, asynchronous access
+                    |  '%' <Modified Type>  ! Queued, asynchronous access
                     |  '=' <Modified Type>  ! Constant (immutable) value
                     |  <Optional Type>
+                    
+! More Info on References:
+! Strong, suicide, and weak references refer to heap objects and read-only stack objects
+! Strong references keep their referred object in scope by incrementing its reference count; suicide references keep their referred object in scope by matching its lifetime (i.e. self-destructing when the reference is no longer valid); weak references nullify (i.e. value becomes 'empty') when their referred object goes out of scope
+! Strong references cannot refer to value-semantic objects (due to lifetime and scoping differences); however, suicide and weak reference types can refer directly to value-semantic objects if the objects are treated as read-only (to preserve value-semantics)
+! Garbage collection of heap objects is handled via automatic reference counting under the hood
+! Floating stack-references are a kind of strong reference that refer to a value on the stack; they are called 'floating' because they are never passed down the stack as return values--they always "float" at or above the originating stack frame
+! Floating references cannot refer (directly) to heap objects; nor can they be stored in heap-allocated objects
+! Becuase stack values are already allocated and deallocated automatically, floating references do not require dedicated garbage collection
                     
 <Optional Type>    ::= <Optional Type> '?'
                     |  <Type>
                     
-<Attributes>       ::= <Attributes> '#' <Measured Type> ! A combination of attributes
-                    |  '#' <Measured Type>              ! An attribute (abstract, structural datatype)
+<Interfaces>       ::= <Interfaces> '#' <Measured Type> ! A combination of interfaces
+                    |  '#' <Measured Type>              ! An interface
 
-!<Attribute>        ::= '#' <Measured Type>    ! An attribute (abstract, structural datatype)
-!                    |  !'#' 'has' <Tuple Type> ! An anonymous attribute consisting of the named items listed in the tuple
+!<Interface>        ::= '#' <Measured Type>    ! An interface (abstract, structural datatype)
+!                    |  !'#' 'has' <Tuple Type> ! An anonymous interface consisting of the named items listed in the tuple
 
-! More Info on Attributes:
-! Attributes are structurally-typed interfaces; in other words, abstract (unimplemented) datatype definitions
-! Attribute names always begin with a '#' (hashtag); prepending a '#' to a normal datatype creates an attribute from that datatype, or rather, invokes structural-typing with that datatype, as opposed to nominal-typing
+! More Info on Interfaces:
+! Interfaces specify the (public) members that a datatype must have to be compatible with ("implement") it*; *in addition, interfaces can require particular implementations of generic functions, which are defined separately from the datatype
+! When client code uses a datatype where an interface has been specified, the compiler checks that the datatype contains all of the functionality required by the interface
+! Interfaces are structurally-typed--you do not explicitly specify that a datatype implements an interface, unlike e.g. Java and C#; thus, you can easily hook up new interfaces to existing datatypes
+! Interface names always begin with a '#' (hashtag); prepending a '#' to a normal datatype in an annotation treats it as an interface, so that other datatypes can be substituted in its place
                     
 ! ========================================
 ! Type Rules: Type Values
@@ -512,9 +538,15 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
 <Type>           ::= <Full Name>
                   |  <Full Name> <Func Tuple Type>
                   |  <Func Tuple Type>
-                  |  <Attributes> Identifier
-                  |  <Attributes>
+                  |  <Interfaces> Identifier
+                  |  <Interfaces>
                   |  '_'                           ! Blank annotation; enables type inferrence
+
+! More Info on Datatypes:
+! All (data)types are treated (at a high-level) as classes--even "primitive" types (e.g. float) and tuples
+! All types use value-based semantics, unless wrapped in one of the four standard reference wrapper types
+! Subtype substitution is only allowed on boxes, which always unbox as necessary to match the required type annotation (see More Info on Boxes)
+! All types are non-nullable (non-optional) with three exceptions: collection types, the weak reference type (i.e. @t), and the optional wrapper type (i.e. t?)
 
 <Type Names>     ::= <Type Names> ',' <Type Name>
                   |  <Type Name>
