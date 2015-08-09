@@ -2,7 +2,7 @@
 
 "Name"           = 'Crystal'
 "Author"         = 'Chad Lechner'
-"Version"        = '1.0 (WIP)'
+"Version"        = '1.0 (Release Candidate)'
 "About"          = 'Crystal is a general-purpose, high-level language designed for safety and performance, emphasizing clean, modular, reusable code.  It takes inspiration from C++, C#, CLOS, D, F#, Haskell, Python, Ruby, Rust, Scala, Swift, and Xanadu.'
 
 "Case Sensitive" = 'True'
@@ -205,9 +205,10 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
                         |  'prop' Identifier '=' <Full Type> ':' 'get' <Expression> 'set' <Identifier>           ! One-line getter/setter property
                         |  'prop' Identifier '=' <Full Type> ':' 'get' <Expression>                              ! One-line getter (read-only) property
                         |  'prop' Identifier '=' <Full Type> ':' 'set' <Identifier>                              ! One-line setter (write-only) property
-                        |  'prop' Identifier ':' 'get' <Expression> 'set' <Identifier>                           ! One-line getter/setter property; useful for exposing variables publicly, as in 'prop Name: get name set name'
+                        |  'prop' Identifier ':' 'get' <Expression> 'set' <Identifier>                           ! One-line getter/setter property
                         |  'prop' Identifier ':' 'get' <Expression>                                              ! One-line getter (read-only) property
                         |  'prop' Identifier ':' 'set' <Identifier>                                              ! One-line setter (write-only) property
+                        |  'prop' Identifier ':' <Identifier>                                                    ! One-line getter/setter property; useful for exposing variables publicly (e.g. prop PublicProperty: privateVariable)
                         !|  'unit' <Measure Identifier> '=' <Measure Identifier>                                  ! Unit of measure defined as the base unit of a measure
                         |  'unit' <Measure Identifier> ':' <Concat Exps>                                         ! Unit of measure (defined as the base unit of a measure or a derived unit in terms of an existing unit(s))
                         !|  'shared' <Variable Declaration>                                                       ! Variable shared among all instances of the datatype definition; i.e. 'static' in other languages
