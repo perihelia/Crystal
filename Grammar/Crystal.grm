@@ -1,4 +1,6 @@
 ! Written using (and testable with) GOLD Parser Builder (www.goldparser.org)
+! Curious about the language or have suggestions?  E-mail me: chocolatepi@outlook.com  I would love to explain more and hear your feedback!
+! Want to implement this programming language?  It's your lucky day... or year!  Crystal is unimplemented and the thought of doing it alone is overwhelming.  You'd make my day!
 
 "Name"           = 'Crystal'
 "Author"         = 'Chad Lechner'
