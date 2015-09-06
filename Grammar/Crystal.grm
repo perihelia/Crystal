@@ -265,6 +265,7 @@ IntegerLiteral       = {Number}+ | '0x' {Hex Char}+
 
 <Named Range>          ::= <Collection Item>
                         |  Identifier
+                        
 <Collection Item>      ::= Identifier 'from' <Concat Exp> ! Restricts the value of the variable to an element from an enumerator or collection, or to a numeric range
                        
 ! ========================================
